@@ -1,0 +1,143 @@
+Read training and test datasets
+
+```{r }
+training_assig=read.csv("C:/Yohannes/Coursera/Predictive modelling/Assignment/Training data.csv")
+testing_assig=read.csv("C:/Yohannes/Coursera/Predictive modelling/Assignment/Testing data.csv")
+```
+
+Checking the sanity of data
+
+```{r }
+head(training_assig)
+tail(training_assig)
+str(training_assig)
+dim(training_assig)
+head(training_assig$classe)
+colSums(is.na(training_assig))
+```
+
+Remove variables with significant missing values
+
+```{r }
+training_assig2=select(training_assig,c(-starts_with("avg")),c(-starts_with("var")),c(-starts_with("max")),c(-starts_with("min")),c(-starts_with("amplitude")),c(-starts_with("stddev")),c(-starts_with("min")),c(-starts_with("amplitude")),c(-starts_with("avg"),c(-starts_with("kurtosis")),-starts_with("skewness")))
+names(training_assig2)
+head(training_assig2)
+str(training_assig2)
+```
+
+Exclude the first few variables from model building
+
+```{r }
+training_assig3=training_assig2[,-c(1:7)]
+str(training_assig3)
+names(training_assig3)
+```
+
+classe Frequency
+
+```{r Classe Frequency, fig.path='', dev=c('png', 'pdf')}
+```{r}
+table(training_assig3$classe)%>%barplot(col="grey")
+```
+```
+
+PREDICTION
+FITTING CLASSIFICATION TREES
+CREATE TRAINING AND TEST DATASETS
+
+```{r }
+set.seed(2)
+inTrain=createDataPartition(y=training_assig3$classe,p=0.7,list=FALSE)
+Train_sets=training_assig3[inTrain,]
+Test_sets=training_assig3[-inTrain,]
+
+```{r}
+dim(Train_sets)
+dim(Test_sets)
+```
+```
+
+FIT TREE TO TRAINING SET, PREDICT TEST SET AND CALCULATE MISCLASS RATE
+
+```{r }
+class_tree2=tree(classe~.,Train_sets)
+summary(modelfit)
+summary(class_tree2) #the prediction gives 18 nodes
+tree.pred=predict(class_tree2,Test_sets,type="class")
+```
+
+CALCULATE ACCURAY
+
+```{r }
+```{r}
+confusionMatrix(tree.pred,Test_sets$classe) #gives 66% accuracy
+```
+```
+
+JUST A NOTE, THE FOLLOWING GIVE DIFFERENT ACCURACY RATE, using TRAIN function
+gives 50% and Rpart 75%
+
+```{r }
+modelfit=train(classe~.,method="rpart",data=training_assig3)
+modelfit2=rpart(classe~.,data=training_assig3, method="class")
+
+pred1=predict(modelfit,Test_sets)
+pred2=predict(modelfit2,Test_sets,type="class")
+
+```{r}
+confusionMatrix(pred1,Test_sets$classe)
+confusionMatrix(pred2,Test_sets$classe)
+```
+```
+
+USING CROSS VALIDATION TO PRUNE THE TREE
+
+```{r }
+set.seed(3)
+cv.class_tree2=cv.tree(class_tree2,FUN=prune.misclass)
+
+```{r}
+cv.class_tree2
+```
+```
+
+The smallest cross validation error occurred for 18 and 17 nodes, 
+hence pruning didnt give better results  
+USING BAGGING...USING ALL THE PREDICTORS
+
+```{r }
+names(Train_sets)
+cv.class.bag=randomForest(classe~.,data=Train_sets,mtry=52,importance=TRUE)
+tree.pred_bag=predict(cv.class.rf,Test_sets)
+
+```{r}
+confusionMatrix(tree.pred_bag,Test_sets$classe) ##gives 98.9% accuracy
+```
+```
+
+RANDOM FOREST
+
+```{r }
+cv.class.bag=train(classe~.,data=training_assig3,method="rf",prox=TRUE)#this took too long to run
+cv.class.rf=randomForest(classe~.,data=Train_sets,mtry=8,importance=TRUE)
+tree.pred_rf=predict(cv.class.rf,Test_sets)
+
+```{r}
+confusionMatrix(tree.pred_rf,Test_sets$classe) ##gives 99.4% accuracy
+```
+```
+
+PREDICTIING THE TEST SET (THE 20 OBSERVATIONS)
+
+```{r }
+testing_assig2=select(testing_assig,c(-starts_with("avg")),c(-starts_with("var")),c(-starts_with("max")),c(-starts_with("min")),c(-starts_with("amplitude")),c(-starts_with("stddev")),c(-starts_with("min")),c(-starts_with("amplitude")),c(-starts_with("avg"),c(-starts_with("kurtosis")),-starts_with("skewness")))
+names(testing_assig2)
+testing_assig3=testing_assig2[,-c(1:7)]
+pred_final=predict(cv.class.rf,testing_assig3)
+
+Test set (20) obseravtions predicted value
+```{r}
+pred_final
+```
+```
+

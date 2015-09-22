@@ -47,12 +47,21 @@ classe Frequency
 
 
 
+
 ```r
-dep=table(training_assig3$classe)
-barplot(dep,col="grey")
+table(training_assig3$classe)
 ```
 
-![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png) 
+```
+## 
+##    A    B    C    D    E 
+## 5580 3797 3422 3216 3607
+```
+
+```r
+#dep=table(training_assig3$classe)
+#barplot(dep,col="grey")
+```
 ```
 
 PREDICTION
